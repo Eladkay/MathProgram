@@ -1,3 +1,5 @@
+package eladkay.mathprogram
+
 object MathTextUtils {
     fun let() = "let {0} be {1}, then "
     fun choose() = "we choose {0} to be {1}, then "

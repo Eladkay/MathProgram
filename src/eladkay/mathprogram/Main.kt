@@ -1,3 +1,5 @@
+package eladkay.mathprogram
+
 fun main(args: Array<String>) {
     MainScreen.isVisible = true
     //for(i in 0x91..0xA9) print("\"\\u03${i.toString(16)}\", ")

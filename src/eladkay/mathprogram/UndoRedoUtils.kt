@@ -1,7 +1,9 @@
+package eladkay.mathprogram
+
 import java.util.*
 import javax.swing.undo.UndoableEdit
 
-object UndoRedoUtils2 {
+object UndoRedoUtils {
     val undoStack = Stack<UndoableEdit>()
     val redoStack = Stack<UndoableEdit>()
     fun undoAction() {
