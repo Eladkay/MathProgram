@@ -11,6 +11,7 @@ import javax.swing.event.DocumentListener
 
 object MainScreen : JFrame(), ActionListener {
     override fun actionPerformed(e: ActionEvent) {
+        if(!textBox.isEnabled) return
         var shouldCaps = textBox.text.endsWith("\n") || textBox.text.endsWith(". ") || textBox.text.isEmpty() || textBox.selectionStart == 0
         var text = ""
 
@@ -45,6 +46,63 @@ object MainScreen : JFrame(), ActionListener {
             }
             "Assumption for ex falso" -> text = MathTextUtils.assumeForContradiction1()
             "Contradiction from ex falso" -> text = MathTextUtils.assumeForContradiction2()
+            "Evaluate expression" -> {
+                if(textBox.selectedText == null) JOptionPane.showMessageDialog(null, "No text is selected!")
+                else {
+                    if("x" in textBox.selectedText) {
+                        textBox.isEnabled = false
+                        val text2 = textBox.selectedText
+                        NumberChooser(action = {
+                            text = ExpressionUtils.evaluate(text2, it.toDouble()).toString()
+                            textBox.replaceSelection(text[0].toUpperCase() + text.substring(1))
+                            textBox.isEnabled = true
+                        }) { textBox.isEnabled = true }.isVisible = true
+                    } else {
+                        text = ExpressionUtils.evaluate(textBox.selectedText, 0.0).toString()
+                        shouldCaps = false
+                    }
+                }
+            }
+            "Limit" -> {
+                if(textBox.selectedText == null) JOptionPane.showMessageDialog(null, "No text is selected!")
+                else {
+                    if("x" in textBox.selectedText) {
+                        textBox.isEnabled = false
+                        val text2 = textBox.selectedText
+                        NumberChooser(action = {
+                            text = ExpressionUtils.limit(text2, it.toDouble()).toString()
+                            textBox.replaceSelection(text[0].toUpperCase() + text.substring(1))
+                            textBox.isEnabled = true
+                        }) { textBox.isEnabled = true }.isVisible = true
+                    } else {
+                        text = ExpressionUtils.limit(textBox.selectedText, 0.0).toString()
+                        shouldCaps = false
+                    }
+                }
+            }
+            "Approximate root" -> {
+                if(textBox.selectedText == null) JOptionPane.showMessageDialog(null, "No text is selected!")
+                else {
+                    if("x" in textBox.selectedText) {
+                        textBox.isEnabled = false
+                        val text2 = textBox.selectedText
+                        NumberChooser(action = {
+                            text = ExpressionUtils.approximateRoot(text2, it.toDouble()).toString()
+                            textBox.replaceSelection(text[0].toUpperCase() + text.substring(1))
+                            textBox.isEnabled = true
+                        }) { textBox.isEnabled = true }.isVisible = true
+                    } else {
+                        if(textBox.selectedText.toDoubleOrNull() == 0.0) text = "every real x"
+                        else JOptionPane.showMessageDialog(null, "No roots of constant function!")
+                    }
+                }
+            }
+            "Negate" -> {
+                if(textBox.selectedText == null) JOptionPane.showMessageDialog(null, "No text is selected!")
+                else {
+                    text = ExpressionUtils.negate(textBox.selectedText)
+                }
+            }
             else -> println(e.actionCommand)
         }
         if(text.isEmpty()) return
@@ -54,6 +112,7 @@ object MainScreen : JFrame(), ActionListener {
 
     private val menuBar = JMenuBar()
     private val textBox = JTextArea()
+    private val greekLock = JCheckBoxMenuItem("Greek lock")
     val lastUsed = JMenu("Last used")
     val lastUsedList = mutableListOf<String>()
     val uppercaseGreek = listOf("\u0391", "\u0392", "\u0393", "\u0394", "\u0395", "\u0396", "\u0397", "\u0398", "\u0399", "\u039a", "\u039b", "\u039c", "\u039d", "\u039e", "\u039f", "\u03a0", "\u03a1", "\u03a2", "\u03a3", "\u03a4", "\u03a5", "\u03a6", "\u03a7", "\u03a8", "\u03a9")
@@ -91,6 +150,42 @@ object MainScreen : JFrame(), ActionListener {
             }
 
             fun change(e: DocumentEvent) {
+                if(greekLock.state && e.length == 1) {
+                    val letter = textBox.text[e.offset]
+                    if(letter.isLetter()) {
+                        var replace = when(letter.toLowerCase()) {
+                            'a' -> 'α'
+                            'b' -> 'β'
+                            'g' -> 'γ'
+                            'd' -> 'ε'
+                            'z' -> 'ζ'
+                            'h' -> 'η'
+                            't' -> 'θ'
+                            'i' -> 'ι'
+                            'k' -> 'κ'
+                            'l' -> 'λ'
+                            'm' -> 'μ'
+                            'n' -> 'ν'
+                            'x' -> 'ξ'
+                            'o' -> 'ο'
+                            'p' -> 'π'
+                            'r' -> 'ρ'
+                            's' -> 'σ'
+                            //'t' -> 'τ'
+                            'u' -> 'υ'
+                            'f' -> 'φ'
+                            'c' -> 'χ'
+                            //'p' -> 'ψ'
+                            //'o' -> 'ω'
+                            else -> letter.toLowerCase()
+                        }
+                        replace = if(letter.isLowerCase()) replace.toLowerCase() else replace.toUpperCase()
+                        val p1 = if(textBox.text.length > 1) textBox.text.substring(0, e.offset + e.length - 1) else ""
+                        val p2 = replace
+                        val p3 = if(textBox.text.length > e.offset + e.length) textBox.text.substring(e.offset + e.length) else ""
+                        SwingUtilities.invokeLater { textBox.text = p1 + p2 + p3 }
+                    }
+                }
                 val changes = mutableMapOf(
                         "->" to "→",
                         "infinity" to "∞",
@@ -132,6 +227,7 @@ object MainScreen : JFrame(), ActionListener {
 
         if (getFileMenu() != null) menuBar.add(getFileMenu())
         if (getEditMenu() != null) menuBar.add(getEditMenu())
+        if (getMathMenu() != null) menuBar.add(getMathMenu())
         if (getOperationsMenu() != null) menuBar.add(getOperationsMenu())
         if (getSymbolsMenu() != null) menuBar.add(getSymbolsMenu())
         if (getCommonExpressionsMenu() != null) menuBar.add(getCommonExpressionsMenu())
@@ -162,7 +258,21 @@ object MainScreen : JFrame(), ActionListener {
         editMenu.add(clear)
         editMenu.add(lineBreak)
         editMenu.add(space)
+        editMenu.add(greekLock)
         return editMenu
+    }
+
+    fun getMathMenu(): JMenu? {
+        val mathMenu = JMenu("Math")
+        val evaluateExpression = getMenuItem("Evaluate expression")
+        val limit = getMenuItem("Limit")
+        val root = getMenuItem("Approximate root")
+        val negate = getMenuItem("Negate")
+        mathMenu.add(evaluateExpression)
+        mathMenu.add(limit)
+        mathMenu.add(root)
+        mathMenu.add(negate)
+        return mathMenu
     }
 
     fun getOperationsMenu(): JMenu? {
