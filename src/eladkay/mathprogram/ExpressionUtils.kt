@@ -1,8 +1,8 @@
 package eladkay.mathprogram
 
 object ExpressionUtils {
-    private val SIN_REGEX = "sin\\((.*)\\)".toRegex()
-    private val COS_REGEX = "cos\\((.*)\\)".toRegex()
+    private val SIN_REGEX = "sin\\((.*?)\\)".toRegex()
+    private val COS_REGEX = "cos\\((.*?)\\)".toRegex()
     fun evaluate(string: String, value: Double, variable: String = "x"): Double {
         //val toParse = string.replace("π", Math.PI.toString())
         val toParse = string.replace("(-?\\d*\\.?\\d*)π".toRegex()) {
