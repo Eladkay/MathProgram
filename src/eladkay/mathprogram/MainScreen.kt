@@ -16,7 +16,7 @@ object MainScreen : JFrame() {
     init {
         size = Toolkit.getDefaultToolkit().screenSize
         title = "MathProgram"
-        defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+        defaultCloseOperation = EXIT_ON_CLOSE
         setLocationRelativeTo(null)
         isResizable = true
         layout = null
