@@ -4,6 +4,7 @@ import java.awt.Dimension
 import java.awt.Font
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.io.File
 import javax.swing.*
@@ -67,9 +68,10 @@ class MathTextBox : JTextPane() {
             change(e!!)
         }
 
+        private var lastChange: String = ""
         fun change(e: DocumentEvent) {
             var text = this@MathTextBox.text
-            if (e.type == DocumentEvent.EventType.REMOVE) return
+            if (text == lastChange || e.type == DocumentEvent.EventType.REMOVE) return
             if (MenuBarHandler.greekLock.state && e.length == 1) {
                 val letter = text[e.offset]
                 if (letter.isLetter()) {
@@ -108,9 +110,14 @@ class MathTextBox : JTextPane() {
                     "member of" to "\u2208",
                     "gradient" to "∇",
                     "\\in" to "∈",
+                    "(" to "()",
+                    "\"" to "\"\"",
+                    "\'" to "\'\'",
             )
+            for(i in 0..9) changes["^$i"] = superscripts[i].toString()
             //val idxStart = e.offset
             val idxEnd = e.offset + e.length - 1
+            var decrementCaret = false
             for (change in changes.keys) {
                 //if (idxEnd + 1 >= text.length && text.length >= change.length) println("$change, $text, ${idxEnd + 1 - change.length}, ${idxEnd + 1}") //, ${text.substring(idxEnd - change.length + 1, idxEnd + 1).toLowerCase()}
                 //else println("${e.offset + e.length > change.length} ${text.length > e.offset + e.length} ${text.length} ${e.offset + e.length}")
@@ -119,14 +126,21 @@ class MathTextBox : JTextPane() {
                     val p2 = changes[change]
                     val p3 = if (text.length > e.offset + e.length) text.substring(e.offset + e.length) else ""
                     text = p1 + p2 + p3
+                    if("(" in change || "\"" in change) decrementCaret = true
                     break //!!!!!
                 }
             }
             counter++
             checkForSmall(text)
-
-            if (this@MathTextBox.text == text) return
-            SwingUtilities.invokeLater { this@MathTextBox.text = text }
+            text = checkForSuperscript(text)
+            lastChange = text
+            //println("${MainScreen.isAltDown} ${MainScreen.isCtrlDown} ${MainScreen.isInsertOn}")
+            MainScreen.saveText(text)
+            if (this@MathTextBox.text == text || MainScreen.isInsertOn) return
+            SwingUtilities.invokeLater {
+                this@MathTextBox.text = text
+                if(decrementCaret) this@MathTextBox.caretPosition--
+            }
         }
 
         private var counter = 0
@@ -161,6 +175,18 @@ class MathTextBox : JTextPane() {
             return false
         }
 
+        private val SUPERSCRIPT_REGEX = "(.*)(.+)\\^\\((\\d+)\\)(.*)".toRegex()
+        private val superscripts = listOf('\u2070', '\u00b9', '\u00b2', '\u00b3', '\u2074', '\u2075', '\u2076', '\u2077', '\u2078', '\u2079')
+        fun checkForSuperscript(text: String): String {
+            if(caretPosition == this@MathTextBox.text.length - 2) return text
+            val matchResult = SUPERSCRIPT_REGEX.matchEntire(text) ?: return text
+            val group1 = matchResult.groupValues[1]
+            val group2 = matchResult.groupValues[2]
+            val group3 = matchResult.groupValues[3].map { superscripts[it.toString().toInt()] }.joinToString("")
+            val group4 = matchResult.groupValues[4]
+            return group1 + group2 + group3 + group4
+        }
+
         override fun removeUpdate(e: DocumentEvent) {
             if (locationsStyle.keys.any { e.offset in it }) {
                 for (it in locationsStyle.filter { e.offset in it.key })
@@ -178,6 +204,7 @@ class MathTextBox : JTextPane() {
 
                     }
             }
+            MainScreen.saveText(text)
         }
 
     }

@@ -2,6 +2,7 @@ package eladkay.mathprogram
 
 import java.awt.Toolkit
 import java.awt.event.*
+import java.io.File
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -17,7 +18,7 @@ object MainScreen : JFrame() {
 
     internal val menuBar = JMenuBar()
     internal val textBox = MathTextBox()
-
+    val tempFile = File("_temp.mp")
     init {
         size = Toolkit.getDefaultToolkit().screenSize
         title = "$NAME $VERSION"
@@ -25,7 +26,7 @@ object MainScreen : JFrame() {
         setLocationRelativeTo(null)
         isResizable = true
         layout = null
-
+        addKeyListener(Listener)
         //textBox.lineWrap = true
         textBox.size = size
         //textBox.tabSize = 4
@@ -50,6 +51,8 @@ object MainScreen : JFrame() {
         if (MenuBarHandler.getCommonExpressionsMenu() != null) menuBar.add(MenuBarHandler.getCommonExpressionsMenu())
         jMenuBar = menuBar
 
+        if(tempFile.exists()) textBox.text = tempFile.readText()
+        else tempFile.createNewFile()
         
     }
 
@@ -60,6 +63,42 @@ object MainScreen : JFrame() {
         return item
     }
 
+    internal fun saveText(string: String) {
+        if(string.isEmpty()) return
+        if(!tempFile.exists()) tempFile.createNewFile()
+        tempFile.writeText(string)
+    }
+
+    var isCtrlDown = false
+        private set
+    var isAltDown = false
+        private set
+    var isInsertOn = false
+        private set
+
+    object Listener : KeyListener {
+        override fun keyTyped(e: KeyEvent) {
+            isCtrlDown = e.isControlDown
+            isAltDown = e.isAltDown
+            if(e.extendedKeyCode == KeyEvent.VK_INSERT) isInsertOn = !isInsertOn
+            println("$isAltDown $isCtrlDown $isInsertOn")
+        }
+
+        override fun keyPressed(e: KeyEvent) {
+            isCtrlDown = e.isControlDown
+            isAltDown = e.isAltDown
+            if(e.extendedKeyCode == KeyEvent.VK_INSERT) isInsertOn = !isInsertOn
+            println("$isAltDown $isCtrlDown $isInsertOn")
+        }
+
+        override fun keyReleased(e: KeyEvent) {
+            isCtrlDown = e.isControlDown
+            isAltDown = e.isAltDown
+            if(e.extendedKeyCode == KeyEvent.VK_INSERT) isInsertOn = !isInsertOn
+            println("$isAltDown $isCtrlDown $isInsertOn")
+        }
+
+    }
 
 
 
