@@ -10,12 +10,17 @@ import javax.swing.text.StyleConstants
 
 object MainScreen : JFrame() {
 
+    const val NAME = "MathProgram"
+    const val VERSION = "0.1"
+    const val HEADER = "---This file was created by $NAME, version $VERSION---\n"
+
+
     internal val menuBar = JMenuBar()
     internal val textBox = MathTextBox()
 
     init {
         size = Toolkit.getDefaultToolkit().screenSize
-        title = "MathProgram"
+        title = "$NAME $VERSION"
         defaultCloseOperation = EXIT_ON_CLOSE
         setLocationRelativeTo(null)
         isResizable = true
@@ -44,6 +49,8 @@ object MainScreen : JFrame() {
         if (MenuBarHandler.getSymbolsMenu() != null) menuBar.add(MenuBarHandler.getSymbolsMenu())
         if (MenuBarHandler.getCommonExpressionsMenu() != null) menuBar.add(MenuBarHandler.getCommonExpressionsMenu())
         jMenuBar = menuBar
+
+        
     }
 
     internal fun getMenuItem(string: String): JMenuItem {
@@ -52,5 +59,9 @@ object MainScreen : JFrame() {
         item.actionCommand = string
         return item
     }
+
+
+
+
 
 }

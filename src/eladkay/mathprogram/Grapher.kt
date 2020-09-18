@@ -5,7 +5,7 @@ import java.awt.image.BufferedImage.TYPE_INT_RGB
 import java.io.ByteArrayOutputStream
 import java.util.*
 import javax.imageio.ImageIO
-import kotlin.math.sign
+import kotlin.math.*
 
 
 // Based on https://github.com/Eladkay/EllipticCurve/blob/master/src/eladkay/ellipticcurve/simulationengine/EllipticSimulator.kt
@@ -33,42 +33,38 @@ object Grapher {
         return ret
     }
 
-    fun drawCurveToList(difference: (Double, Double) -> Double, frameSize: Pair<Int, Int>, errorTerm: Double): List<Pair<Int, Int>> {
+    private fun drawCurveToList(difference: (Double, Double) -> Double, frameSize: Pair<Int, Int>, errorTerm: Double, amountChecks: Int = 4): List<Pair<Int, Int>> {
         val ret = mutableListOf<Pair<Int, Int>>()
         for (x in 0..frameSize.first)
             for (y in 0..frameSize.second) {
                 val xModified = modifyX(x, frameSize)
                 val yModified = modifyY(y, frameSize)
-                if (yModified < 0) continue // elliptic curves are always symmetric
 
                 var condition = difference(xModified, yModified) == 0.0
-                val s1 = difference(xModified + errorTerm, yModified + errorTerm).sign
-                val s2 = difference(xModified + errorTerm, yModified - errorTerm).sign
-                val s3 = difference(xModified - errorTerm, yModified + errorTerm).sign
-                val s4 = difference(xModified - errorTerm, yModified - errorTerm).sign
-                if (!condition && Math.abs(s1 + s2 + s3 + s4) != 4.0) // if they're not all the same sign
-                    condition = true
+                condition = condition || diskCheck(amountChecks, errorTerm, xModified to yModified, difference)
                 if (condition) {
                     ret.add(x to y)
-                    ret.add(x to demodifyY(-yModified, frameSize))
                 }
             }
         return ret
     }
 
-    private fun demodifyY(y: Double, frameSize: Pair<Int, Int>): Int {
-        return (-15.0 * y + frameSize.second / 2).toInt()
-    }
-
-    private fun demodifyX(x: Double, frameSize: Pair<Int, Int>): Int {
-        return (x * 200.0 + frameSize.second / 2).toInt()
+    private fun diskCheck(amount: Int, radius: Double, point: Pair<Double, Double>, difference: (Double, Double) -> Double): Boolean {
+        // We divide the circle of radius [radius] around the point [point] into [amount] equal arcs:
+        val testPoints = mutableListOf<Pair<Double, Double>>()
+        val theta = 2 * PI / amount
+        for(i in 0..amount) {
+            testPoints.add(Pair(point.first + radius * cos(i * theta), point.second + radius * sin(i * theta)))
+        }
+        // Check if all points are on the same side of the curve whose difference function is [difference].
+        return abs(testPoints.map { difference(it.first, it.second).sign }.sum()) != amount.toDouble()
     }
 
     private fun modifyY(y: Int, frameSize: Pair<Int, Int>): Double {
-        return (-y + frameSize.second / 2) / 15.0
+        return (-y + frameSize.second / 2) / 5.0
     }
 
     private fun modifyX(x: Int, frameSize: Pair<Int, Int>): Double {
-        return (x - frameSize.first / 2) / 200.0
+        return (x - frameSize.first / 2) / 80.0
     }
 }

@@ -2,15 +2,16 @@ package eladkay.mathprogram
 
 import java.awt.Dimension
 import java.awt.Font
+import java.awt.event.ActionEvent
+import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import java.io.File
-import javax.swing.JScrollPane
-import javax.swing.JTextPane
-import javax.swing.SwingUtilities
+import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
+import javax.swing.text.StyleConstants.ALIGN_CENTER
 import javax.swing.text.TabSet
 import javax.swing.text.TabStop
 
@@ -24,6 +25,17 @@ class MathTextBox : JTextPane() {
         scrollPane.preferredSize = Dimension(200, 200)
         add(scrollPane)
         setTabs(4)
+        inputMap.put(KeyStroke.getKeyStroke('C', InputEvent.ALT_DOWN_MASK), "center")
+        actionMap.put("center", object : AbstractAction() {
+            override fun actionPerformed(e: ActionEvent?) {
+                println("hi")
+                if(selectedText == null) return
+                val center = SimpleAttributeSet()
+                StyleConstants.setAlignment(center, ALIGN_CENTER)
+                styledDocument.setParagraphAttributes(selectionStart, selectionEnd - selectionStart, center, false)
+            }
+
+        })
     }
 
     override fun getToolTipText(event: MouseEvent): String {
@@ -35,9 +47,10 @@ class MathTextBox : JTextPane() {
         if (index < startSelectionIndex || index > endSelectionIndex)
             return super.getToolTipText(event)
         return try {
+            println(Grapher.evaluateBase64(text, 160 to 160))
             "<html>" + (if("x" !in text)
                 ExpressionUtils.evaluate(text, 0.0).toString()
-            else "<img src=\"https://www.w3schools.com/images/lamp.jpg\" alt=\"Lamp\" width=\"32\" height=\"32\">\n") + "</html>"//"Graph:<br><img src=\"${File("imagetest").readText()}\"")
+            else "Graph:<br><img src=\"data:image/gif;base64,"+Grapher.evaluateBase64(text, 160 to 160)+"\" alt=\"Graph\" width=\"160\" height=\"160\">\n") + "</html>"//"Graph:<br><img src=\"${File("imagetest").readText()}\"")
             //else "Graph:<br><img src=\"data:image/gif;base64," + Grapher.evaluateBase64(text, 160 to 160) + "\">") + "</html>" //
         } catch (e: Exception) {
             super.getToolTipText(event)
@@ -101,7 +114,7 @@ class MathTextBox : JTextPane() {
             for (change in changes.keys) {
                 //if (idxEnd + 1 >= text.length && text.length >= change.length) println("$change, $text, ${idxEnd + 1 - change.length}, ${idxEnd + 1}") //, ${text.substring(idxEnd - change.length + 1, idxEnd + 1).toLowerCase()}
                 //else println("${e.offset + e.length > change.length} ${text.length > e.offset + e.length} ${text.length} ${e.offset + e.length}")
-                if (idxEnd - change.length + 1 <= text.length && idxEnd + 1 <= text.length && text.length >= change.length && text.substring(idxEnd - change.length + 1, idxEnd + 1).toLowerCase().trim() == change.trim()) {
+                if (idxEnd + 1 >= change.length && idxEnd - change.length + 1 <= text.length && idxEnd + 1 <= text.length && text.length >= change.length && text.substring(idxEnd - change.length + 1, idxEnd + 1).toLowerCase().trim() == change.trim()) {
                     val p1 = if (text.length > change.length) text.substring(0, e.offset + e.length - change.length) else ""
                     val p2 = changes[change]
                     val p3 = if (text.length > e.offset + e.length) text.substring(e.offset + e.length) else ""

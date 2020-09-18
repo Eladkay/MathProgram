@@ -2,7 +2,10 @@ package eladkay.mathprogram
 
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
+import java.io.File
 import javax.swing.JCheckBoxMenuItem
+import javax.swing.JFileChooser
+import javax.swing.JFileChooser.APPROVE_OPTION
 import javax.swing.JMenu
 import javax.swing.JOptionPane
 
@@ -100,6 +103,15 @@ object MenuBarHandler : ActionListener {
                     text = ExpressionUtils.negate(MainScreen.textBox.selectedText)
                 }
             }
+            "Save..." -> {
+                val result = fileChooser.showSaveDialog(MainScreen)
+                if(result == APPROVE_OPTION) {
+                    val fileSelected = fileChooser.selectedFile
+                    val file = File(fileSelected.absolutePath + ".txt")
+                    file.createNewFile()
+                    file.writeText(MainScreen.HEADER + MainScreen.textBox.text)
+                }
+            }
             else -> println(e.actionCommand)
         }
         if(text.isEmpty()) return
@@ -108,6 +120,7 @@ object MenuBarHandler : ActionListener {
     }
     val greekLock = JCheckBoxMenuItem("Greek lock")
     val lastUsed = JMenu("Last used")
+    val fileChooser = JFileChooser()
     val lastUsedList = mutableListOf<String>()
     val uppercaseGreek = listOf("\u0391", "\u0392", "\u0393", "\u0394", "\u0395", "\u0396", "\u0397", "\u0398", "\u0399", "\u039a", "\u039b", "\u039c", "\u039d", "\u039e", "\u039f", "\u03a0", "\u03a1", "\u03a2", "\u03a3", "\u03a4", "\u03a5", "\u03a6", "\u03a7", "\u03a8", "\u03a9")
     val lowercaseGreek = listOf("\u03b1", "\u03b2", "\u03b3", "\u03b4", "\u03b5", "\u03b6", "\u03b7", "\u03b8", "\u03b9", "\u03ba", "\u03bb", "\u03bc", "\u03bd", "\u03be", "\u03bf", "\u03c0", "\u03c1", "\u03c2", "\u03c3", "\u03c4", "\u03c5", "\u03c6", "\u03c7", "\u03c8", "\u03c9")
@@ -122,6 +135,8 @@ object MenuBarHandler : ActionListener {
 
     fun getFileMenu(): JMenu? {
         val fileMenu = JMenu("File")
+        val save = MainScreen.getMenuItem("Save...")
+        fileMenu.add(save)
         return fileMenu
     }
 
