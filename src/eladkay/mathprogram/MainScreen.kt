@@ -76,26 +76,22 @@ object MainScreen : JFrame() {
     var isInsertOn = false
         private set
 
-    object Listener : KeyListener {
+    internal object Listener : KeyListener {
         override fun keyTyped(e: KeyEvent) {
             isCtrlDown = e.isControlDown
             isAltDown = e.isAltDown
             if(e.extendedKeyCode == KeyEvent.VK_INSERT) isInsertOn = !isInsertOn
-            println("$isAltDown $isCtrlDown $isInsertOn")
         }
 
         override fun keyPressed(e: KeyEvent) {
             isCtrlDown = e.isControlDown
             isAltDown = e.isAltDown
             if(e.extendedKeyCode == KeyEvent.VK_INSERT) isInsertOn = !isInsertOn
-            println("$isAltDown $isCtrlDown $isInsertOn")
         }
 
         override fun keyReleased(e: KeyEvent) {
             isCtrlDown = e.isControlDown
             isAltDown = e.isAltDown
-            if(e.extendedKeyCode == KeyEvent.VK_INSERT) isInsertOn = !isInsertOn
-            println("$isAltDown $isCtrlDown $isInsertOn")
         }
 
     }

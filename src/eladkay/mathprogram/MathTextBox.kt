@@ -19,13 +19,16 @@ import javax.swing.text.TabStop
 
 class MathTextBox : JTextPane() {
 
+
     init {
         this.document.addDocumentListener(Listener())
-        font = Font("monospaced", Font.PLAIN, 12)
+        font = Font("monospaced", Font.PLAIN, FONT_SIZE)
         val scrollPane = JScrollPane(this.parent)
         scrollPane.preferredSize = Dimension(200, 200)
         add(scrollPane)
         setTabs(4)
+
+        addKeyListener(MainScreen.Listener)
         inputMap.put(KeyStroke.getKeyStroke('C', InputEvent.ALT_DOWN_MASK), "center")
         actionMap.put("center", object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
@@ -76,7 +79,7 @@ class MathTextBox : JTextPane() {
                 val letter = text[e.offset]
                 if (letter.isLetter()) {
                     var replace = when (letter.toLowerCase()) {
-                        'a' -> 'α';'b' -> 'β';'g' -> 'γ';'d' -> 'ε';'z' -> 'ζ';'h' -> 'η';'t' -> 'θ';'i' -> 'ι';'k' -> 'κ';'l' -> 'λ';'m' -> 'μ';'n' -> 'ν';'x' -> 'ξ';'o' -> 'ο';'p' -> 'π';'r' -> 'ρ';'s' -> 'σ';
+                        'a' -> 'α';'b' -> 'β';'g' -> 'γ';'d' -> 'δ';'e' -> 'ε';'z' -> 'ζ';'h' -> 'η';'t' -> 'θ';'i' -> 'ι';'k' -> 'κ';'l' -> 'λ';'m' -> 'μ';'n' -> 'ν';'x' -> 'ξ';'o' -> 'ο';'p' -> 'π';'r' -> 'ρ';'s' -> 'σ';
                     //'t' -> 'τ'
                         'u' -> 'υ';'f' -> 'φ';'c' -> 'χ';
                     //'p' -> 'ψ'
@@ -213,9 +216,11 @@ class MathTextBox : JTextPane() {
         private const val UNDERLINE = 1
         private const val THREE_HALVES_SPACE = 2
         private val locationsStyle = mutableMapOf<IntRange, Int>()
+        const val FONT_SIZE = 20
     }
 
     // https://community.oracle.com/thread/1507037
+    @Suppress("SameParameterValue")
     private fun setTabs(charactersPerTab: Int) {
         val fm = getFontMetrics(font)
         val charWidth = fm.charWidth('w')
@@ -231,6 +236,7 @@ class MathTextBox : JTextPane() {
         val tabSet = TabSet(tabs)
         val attributes = SimpleAttributeSet()
         StyleConstants.setTabSet(attributes, tabSet)
+        StyleConstants.setFontSize(attributes, FONT_SIZE)
         val length = document.length
         styledDocument.setParagraphAttributes(0, length, attributes, true)
     }
