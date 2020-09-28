@@ -112,6 +112,13 @@ object MenuBarHandler : ActionListener {
                     file.writeText(MainScreen.HEADER + MainScreen.textBox.text)
                 }
             }
+            "Export..." -> {
+                val result = fileChooser.showSaveDialog(MainScreen)
+                if(result == APPROVE_OPTION) {
+                    val fileSelected = fileChooser.selectedFile.absolutePath + ".pdf"
+                    PdfUtils.export(fileSelected)
+                }
+            }
             else -> println(e.actionCommand)
         }
         if(text.isEmpty()) return
@@ -136,7 +143,9 @@ object MenuBarHandler : ActionListener {
     fun getFileMenu(): JMenu? {
         val fileMenu = JMenu("File")
         val save = MainScreen.getMenuItem("Save...")
+        val export = MainScreen.getMenuItem("Export...")
         fileMenu.add(save)
+        fileMenu.add(export)
         return fileMenu
     }
 

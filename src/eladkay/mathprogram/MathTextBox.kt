@@ -19,9 +19,10 @@ import javax.swing.text.TabStop
 
 class MathTextBox : JTextPane() {
 
-
+    private lateinit var listener: DocumentListener
     init {
-        this.document.addDocumentListener(Listener())
+        listener = Listener()
+        this.document.addDocumentListener(listener)
         font = Font("monospaced", Font.PLAIN, FONT_SIZE)
         val scrollPane = JScrollPane(this.parent)
         scrollPane.preferredSize = Dimension(200, 200)
@@ -61,8 +62,12 @@ class MathTextBox : JTextPane() {
         }
     }
 
+    internal val smallMap = mutableMapOf<IntRange, IntRange>()
+    fun debug() {
+        println(MainScreen.addMetadata(text))
+    }
+
     private inner class Listener : DocumentListener {
-        private val smallRender = mutableListOf("x→[\\w\\d∞]" to "lim \\((.*?)\\) ")
         override fun changedUpdate(e: DocumentEvent?) {
             change(e!!)
         }
@@ -147,35 +152,15 @@ class MathTextBox : JTextPane() {
         }
 
         private var counter = 0
-        fun checkForSmall(text: String): Boolean {
-            for ((small, under) in smallRender) {
-                if (text.matches(".*(($under)($small))".toRegex())) {
-                    counter++
-                    println("hi $text")
-                    val result = ".*(($under)($small))".toRegex().matchEntire(text)!!
-                    //val underIndexRange = result.groups[2]!!.range
-                    //val smallIndexRange = result.groups[3]!!.range
-                    val indexRange = result.groups[1]!!.range
-                    val sdoc = this@MathTextBox.styledDocument
-                    println(locationsStyle)
-                    val flag = (locationsStyle[indexRange] ?: 0
-                    and (UNDERLINE or THREE_HALVES_SPACE)) != 0//StyleConstants.getSpaceBelow(this@MathTextBox.inputAttributes) == 1.5f && StyleConstants.isUnderline(this@MathTextBox.inputAttributes)
-                    //println(underIndexRange)
-                    println("$flag $text")
-                    if (!flag && indexRange.last + 1 > indexRange.first) {
-                        SwingUtilities.invokeLater {
-                            println("hhh")
-                            val att = SimpleAttributeSet(this@MathTextBox.inputAttributes)
-                            StyleConstants.setSpaceBelow(att, 1.5f)
-                            StyleConstants.setUnderline(att, true)
-                            locationsStyle[indexRange] = UNDERLINE or THREE_HALVES_SPACE
-                            sdoc.setCharacterAttributes(indexRange.first, indexRange.endInclusive - indexRange.start + 1, att, true)
-                        }
-                        return true
-                    }
-                } //else println(text)
-            }
-            return false
+        private val SMALL_REGEX = "(.*)(?:\\((.+)\\)_\\((.+)\\)|((?:\\w|\\d))_((?:\\w|\\d)))(.*)".toRegex()
+        fun checkForSmall(text: String) {
+            if(caretPosition == this@MathTextBox.text.length - 2) return
+            val matchResult = SMALL_REGEX.matchEntire(text) ?: return
+            val group2 = matchResult.groups[2] ?: matchResult.groups[4]!!
+            val group3 = matchResult.groups[3] ?: matchResult.groups[5]!!
+            if(group2.range in smallMap.keys || group2.range in smallMap.values || group3.range in smallMap.keys || group3.range in smallMap.values)
+                return
+            smallMap[group2.range] = group3.range
         }
 
         private val SUPERSCRIPT_REGEX = "(.*)(.+)\\^\\((\\d+)\\)(.*)".toRegex()
@@ -191,20 +176,16 @@ class MathTextBox : JTextPane() {
         }
 
         override fun removeUpdate(e: DocumentEvent) {
-            if (locationsStyle.keys.any { e.offset in it }) {
-                for (it in locationsStyle.filter { e.offset in it.key })
+            if (smallMap.keys.any { e.offset in it } || smallMap.values.any { e.offset in it }) {
                     SwingUtilities.invokeLater {
-                        // try again
-                        if(!checkForSmall(this@MathTextBox.text) && counter % 2 == 0) {
-                            println("removing")
-                            val sdoc = this@MathTextBox.styledDocument
-                            val att = SimpleAttributeSet(this@MathTextBox.inputAttributes)
-                            if (it.value and THREE_HALVES_SPACE != 0) StyleConstants.setSpaceBelow(att, 1f)
-                            if (it.value and UNDERLINE != 0) StyleConstants.setUnderline(att, false)
-                            sdoc.setCharacterAttributes(it.key.first, it.key.endInclusive - it.key.start + 1, att, true)
-                            locationsStyle.remove(it.key)
-                        }
-
+                        println(e.offset)
+                        for(pair in smallMap)
+                            if(e.offset in pair.key.first..pair.value.last) smallMap.remove(pair.key)
+                        var smallMapBak: MutableMap<IntRange, IntRange>
+                        do {
+                            smallMapBak = smallMap.toMutableMap()
+                            checkForSmall(text)
+                        } while (smallMapBak != smallMap)
                     }
             }
             MainScreen.saveText(text)
